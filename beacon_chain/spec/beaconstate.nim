@@ -13,7 +13,7 @@ import
   json_serialization/std/sets,
   chronicles,
   ../extras, ../ssz/merkleization,
-  ./crypto, ./datatypes, ./digest, ./helpers, ./signatures, ./validator,
+  ./crypto, ./datatypes/[phase0, hf1], ./digest, ./helpers, ./signatures, ./validator,
   ../../nbench/bench_lab
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#is_valid_merkle_branch
@@ -41,7 +41,7 @@ func increase_balance*(balance: var Gwei, delta: Gwei) =
   balance += delta
 
 func increase_balance*(
-    state: var BeaconState, index: ValidatorIndex, delta: Gwei) =
+    state: var SomeBeaconState, index: ValidatorIndex, delta: Gwei) =
   ## Increase the validator balance at index ``index`` by ``delta``.
   if delta != 0: # avoid dirtying the balance cache if not needed
     increase_balance(state.balances[index], delta)
@@ -55,7 +55,7 @@ func decrease_balance*(balance: var Gwei, delta: Gwei) =
       balance - delta
 
 func decrease_balance*(
-    state: var BeaconState, index: ValidatorIndex, delta: Gwei) =
+    state: var SomeBeaconState, index: ValidatorIndex, delta: Gwei) =
   ## Decrease the validator balance at index ``index`` by ``delta``, with
   ## underflow protection.
   if delta != 0: # avoid dirtying the balance cache if not needed
@@ -80,7 +80,7 @@ func get_validator_from_deposit(deposit: DepositData):
   )
 
 proc process_deposit*(preset: RuntimePreset,
-                      state: var BeaconState,
+                      state: var phase0.BeaconState,
                       deposit: Deposit,
                       flags: UpdateFlags = {}): Result[void, cstring] {.nbench.}=
   ## Process an Eth1 deposit, registering a validator or increasing its balance.
@@ -142,7 +142,8 @@ func compute_activation_exit_epoch(epoch: Epoch): Epoch =
   epoch + 1 + MAX_SEED_LOOKAHEAD
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#get_validator_churn_limit
-func get_validator_churn_limit(state: BeaconState, cache: var StateCache): uint64 =
+func get_validator_churn_limit(state: SomeBeaconState, cache: var StateCache):
+    uint64 =
   ## Return the validator churn limit for the current epoch.
   max(
     MIN_PER_EPOCH_CHURN_LIMIT,
@@ -150,7 +151,7 @@ func get_validator_churn_limit(state: BeaconState, cache: var StateCache): uint6
       state, state.get_current_epoch(), cache) div CHURN_LIMIT_QUOTIENT)
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#initiate_validator_exit
-func initiate_validator_exit*(state: var BeaconState,
+func initiate_validator_exit*(state: var phase0.BeaconState,
                               index: ValidatorIndex, cache: var StateCache) =
   ## Initiate the exit of the validator with index ``index``.
 
@@ -190,7 +191,7 @@ func initiate_validator_exit*(state: var BeaconState,
     validator.exit_epoch + MIN_VALIDATOR_WITHDRAWABILITY_DELAY
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#slash_validator
-proc slash_validator*(state: var BeaconState, slashed_index: ValidatorIndex,
+proc slash_validator*(state: var phase0.BeaconState, slashed_index: ValidatorIndex,
     cache: var StateCache) =
   ## Slash the validator with index ``index``.
   let epoch = get_current_epoch(state)
@@ -242,7 +243,7 @@ proc initialize_beacon_state_from_eth1*(
     eth1_block_hash: Eth2Digest,
     eth1_timestamp: uint64,
     deposits: openArray[DepositData],
-    flags: UpdateFlags = {}): BeaconStateRef {.nbench.} =
+    flags: UpdateFlags = {}): phase0.BeaconStateRef {.nbench.} =
   ## Get the genesis ``BeaconState``.
   ##
   ## Before the beacon chain starts, validators will register in the Eth1 chain
@@ -259,7 +260,7 @@ proc initialize_beacon_state_from_eth1*(
   # at that point :)
   doAssert deposits.lenu64 >= SLOTS_PER_EPOCH
 
-  var state = BeaconStateRef(
+  var state = phase0.BeaconStateRef(
     fork: Fork(
       previous_version: preset.GENESIS_FORK_VERSION,
       current_version: preset.GENESIS_FORK_VERSION,
@@ -328,16 +329,17 @@ proc initialize_hashed_beacon_state_from_eth1*(
     eth1_block_hash: Eth2Digest,
     eth1_timestamp: uint64,
     deposits: openArray[DepositData],
-    flags: UpdateFlags = {}): HashedBeaconState =
+    flags: UpdateFlags = {}): phase0.HashedBeaconState =
   let genesisState = initialize_beacon_state_from_eth1(
     preset, eth1_block_hash, eth1_timestamp, deposits, flags)
-  HashedBeaconState(data: genesisState[], root: hash_tree_root(genesisState[]))
+  phase0.HashedBeaconState(
+    data: genesisState[], root: hash_tree_root(genesisState[]))
 
 template emptyBeaconBlockBody(): BeaconBlockBody =
   BeaconBlockBody()
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#genesis-block
-func get_initial_beacon_block*(state: BeaconState): SignedBeaconBlock =
+func get_initial_beacon_block*(state: phase0.BeaconState): SignedBeaconBlock =
   let message = BeaconBlock(
     slot: state.slot,
     state_root: hash_tree_root(state),
@@ -347,7 +349,7 @@ func get_initial_beacon_block*(state: BeaconState): SignedBeaconBlock =
   SignedBeaconBlock(message: message, root: hash_tree_root(message))
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#get_block_root_at_slot
-func get_block_root_at_slot*(state: BeaconState,
+func get_block_root_at_slot*(state: SomeBeaconState,
                              slot: Slot): Eth2Digest =
   ## Return the block root at a recent ``slot``.
 
@@ -360,12 +362,12 @@ func get_block_root_at_slot*(state: BeaconState,
   state.block_roots[slot mod SLOTS_PER_HISTORICAL_ROOT]
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#get_block_root
-func get_block_root*(state: BeaconState, epoch: Epoch): Eth2Digest =
+func get_block_root*(state: SomeBeaconState, epoch: Epoch): Eth2Digest =
   ## Return the block root at the start of a recent ``epoch``.
   get_block_root_at_slot(state, compute_start_slot_at_epoch(epoch))
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#get_total_balance
-func get_total_balance*(state: BeaconState, validators: auto): Gwei =
+func get_total_balance*(state: SomeBeaconState, validators: auto): Gwei =
   ## Return the combined effective balance of the ``indices``.
   ## ``EFFECTIVE_BALANCE_INCREMENT`` Gwei minimum to avoid divisions by zero.
   ## Math safe up to ~10B ETH, afterwhich this overflows uint64.
@@ -380,7 +382,7 @@ func is_eligible_for_activation_queue(validator: Validator): bool =
     validator.effective_balance == MAX_EFFECTIVE_BALANCE
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#is_eligible_for_activation
-func is_eligible_for_activation(state: BeaconState, validator: Validator):
+func is_eligible_for_activation(state: SomeBeaconState, validator: Validator):
     bool =
   ## Check if ``validator`` is eligible for activation.
 
@@ -390,7 +392,7 @@ func is_eligible_for_activation(state: BeaconState, validator: Validator):
     validator.activation_epoch == FAR_FUTURE_EPOCH
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#registry-updates
-proc process_registry_updates*(state: var BeaconState,
+proc process_registry_updates*(state: var phase0.BeaconState,
     cache: var StateCache) {.nbench.} =
   ## Process activation eligibility and ejections
 
@@ -441,7 +443,7 @@ proc process_registry_updates*(state: var BeaconState,
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#is_valid_indexed_attestation
 proc is_valid_indexed_attestation*(
-    state: BeaconState, indexed_attestation: SomeIndexedAttestation,
+    state: SomeBeaconState, indexed_attestation: SomeIndexedAttestation,
     flags: UpdateFlags): Result[void, cstring] =
   ## Check if ``indexed_attestation`` is not empty, has sorted and unique
   ## indices and has a valid aggregate signature.
@@ -478,7 +480,7 @@ proc is_valid_indexed_attestation*(
   ok()
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#get_attesting_indices
-iterator get_attesting_indices*(state: BeaconState,
+iterator get_attesting_indices*(state: SomeBeaconState,
                                 data: AttestationData,
                                 bits: CommitteeValidatorsBits,
                                 cache: var StateCache): ValidatorIndex =
@@ -492,7 +494,7 @@ iterator get_attesting_indices*(state: BeaconState,
         yield index
       inc i
 
-iterator get_sorted_attesting_indices*(state: BeaconState,
+iterator get_sorted_attesting_indices*(state: SomeBeaconState,
                                        data: AttestationData,
                                        bits: CommitteeValidatorsBits,
                                        cache: var StateCache): ValidatorIndex =
@@ -504,13 +506,13 @@ iterator get_sorted_attesting_indices*(state: BeaconState,
     yield heap.pop()
 
 func get_sorted_attesting_indices_list*(
-    state: BeaconState, data: AttestationData, bits: CommitteeValidatorsBits,
+    state: SomeBeaconState, data: AttestationData, bits: CommitteeValidatorsBits,
     cache: var StateCache): List[uint64, Limit MAX_VALIDATORS_PER_COMMITTEE] =
   for index in get_sorted_attesting_indices(state, data, bits, cache):
     result.add index.uint64
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#get_indexed_attestation
-func get_indexed_attestation(state: BeaconState, attestation: Attestation,
+func get_indexed_attestation(state: SomeBeaconState, attestation: Attestation,
     cache: var StateCache): IndexedAttestation =
   ## Return the indexed attestation corresponding to ``attestation``.
   IndexedAttestation(
@@ -520,7 +522,7 @@ func get_indexed_attestation(state: BeaconState, attestation: Attestation,
     signature: attestation.signature
   )
 
-func get_indexed_attestation(state: BeaconState, attestation: TrustedAttestation,
+func get_indexed_attestation(state: SomeBeaconState, attestation: TrustedAttestation,
     cache: var StateCache): TrustedIndexedAttestation =
   ## Return the indexed attestation corresponding to ``attestation``.
   TrustedIndexedAttestation(
@@ -574,7 +576,7 @@ func check_attestation_index(
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#attestations
 proc check_attestation*(
-    state: BeaconState, attestation: SomeAttestation, flags: UpdateFlags,
+    state: SomeBeaconState, attestation: SomeAttestation, flags: UpdateFlags,
     cache: var StateCache): Result[void, cstring] =
   ## Check that an attestation follows the rules of being included in the state
   ## at the current slot. When acting as a proposer, the same rules need to
@@ -609,7 +611,7 @@ proc check_attestation*(
   ok()
 
 proc process_attestation*(
-    state: var BeaconState, attestation: SomeAttestation, flags: UpdateFlags,
+    state: var phase0.BeaconState, attestation: SomeAttestation, flags: UpdateFlags,
     cache: var StateCache): Result[void, cstring] {.nbench.} =
   # In the spec, attestation validation is mixed with state mutation, so here
   # we've split it into two functions so that the validation logic can be
@@ -639,7 +641,7 @@ proc process_attestation*(
   ok()
 
 func makeAttestationData*(
-    state: BeaconState, slot: Slot, committee_index: CommitteeIndex,
+    state: phase0.BeaconState, slot: Slot, committee_index: CommitteeIndex,
     beacon_block_root: Eth2Digest): AttestationData =
   ## Create an attestation / vote for the block `beacon_block_root` using the
   ## data in `state` to fill in the rest of the fields.
@@ -670,7 +672,7 @@ func makeAttestationData*(
   )
 
 # https://github.com/ethereum/eth2.0-specs/blob/34cea67b91/specs/lightclient/lightclient-fork.md#upgrading-the-state
-func upgrade_to_lightclient_patch(pre: BeaconState): BeaconStateHF1 =
+func upgrade_to_lightclient_patch(pre: phase0.BeaconState): hf1.BeaconState =
   let epoch = get_current_epoch(pre)
 
   # https://github.com/ethereum/eth2.0-specs/blob/34cea67b91/specs/lightclient/lightclient-fork.md#configuration
@@ -681,7 +683,7 @@ func upgrade_to_lightclient_patch(pre: BeaconState): BeaconStateHF1 =
   for _ in 0 ..< len(pre.validators):
     empty_participation.add 0.ValidatorFlag
 
-  BeaconStateHF1(
+  hf1.BeaconState(
     genesis_time: pre.genesis_time,
     genesis_validators_root: pre.genesis_validators_root,
     slot: pre.slot,
