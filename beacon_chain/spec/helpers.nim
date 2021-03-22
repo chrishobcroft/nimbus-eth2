@@ -15,7 +15,7 @@ import
   # Third-party
   stew/[byteutils, endians2],
   # Internal
-  ./datatypes/phase0, ./datatypes/hf1, ./digest, ./crypto, ../ssz/merkleization
+  ./datatypes/phase0, ./datatypes/altair, ./digest, ./crypto, ../ssz/merkleization
 
 # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#integer_squareroot
 func integer_squareroot*(n: SomeInteger): SomeInteger =
