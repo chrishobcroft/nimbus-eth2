@@ -1,5 +1,5 @@
 # beacon_chain
-# Copyright (c) 2018-2020 Status Research & Development GmbH
+# Copyright (c) 2018-2021 Status Research & Development GmbH
 # Licensed and distributed under either of
 #   * MIT license (license terms in the root directory or at https://opensource.org/licenses/MIT).
 #   * Apache v2 license (license terms in the root directory or at https://www.apache.org/licenses/LICENSE-2.0).
@@ -14,11 +14,12 @@ import
   stew/[endians2, byteutils], chronicles,
   eth/keys,
   # Internals
+  ./statedata_types,
   ../spec/[datatypes, crypto, digest, signatures_batch],
   ../beacon_chain_db, ../extras
 
 from libp2p/protocols/pubsub/pubsub import ValidationResult
-export ValidationResult, sets, tables
+export ValidationResult, sets, statedata_types, tables
 
 
 # #############################################
@@ -178,30 +179,11 @@ type
     # balances, as used in fork choice
     effective_balances_bytes*: seq[byte]
 
-  BlockRef* = ref object
-    ## Node in object graph guaranteed to lead back to tail block, and to have
-    ## a corresponding entry in database.
-    ## Block graph should form a tree - in particular, there are no cycles.
-
-    root*: Eth2Digest ##\
-    ## Root that can be used to retrieve block data from database
-
-    parent*: BlockRef ##\
-    ## Not nil, except for the tail
-
-    slot*: Slot # could calculate this by walking to root, but..
-
   BlockData* = object
     ## Body and graph in one
 
     data*: TrustedSignedBeaconBlock # We trust all blocks we have a ref for
     refs*: BlockRef
-
-  StateData* = object
-    data*: HashedBeaconState
-
-    blck*: BlockRef ##\
-    ## The block associated with the state found in data
 
   BlockSlot* = object
     ## Unique identifier for a particular fork and time in the block chain -

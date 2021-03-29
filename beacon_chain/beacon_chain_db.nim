@@ -453,7 +453,7 @@ proc getBlockSummary*(db: BeaconChainDB, key: Eth2Digest): Opt[BeaconBlockSummar
 
 proc getStateOnlyMutableValidators(
     db: BeaconChainDB, key: Eth2Digest, output: var BeaconState,
-    rollback: RollbackProc): bool =
+    rollback: RollbackProcPhase0): bool =
   ## Load state into `output` - BeaconState is large so we want to avoid
   ## re-allocating it if possible
   ## Return `true` iff the entry was found in the database and `output` was
@@ -498,7 +498,7 @@ proc getStateOnlyMutableValidators(
 
 proc getState*(
     db: BeaconChainDB, key: Eth2Digest, output: var BeaconState,
-    rollback: RollbackProc): bool =
+    rollback: RollbackProcPhase0): bool =
   ## Load state into `output` - BeaconState is large so we want to avoid
   ## re-allocating it if possible
   ## Return `true` iff the entry was found in the database and `output` was

@@ -114,7 +114,7 @@ type
     data*: BeaconState
     root*: Eth2Digest # hash_tree_root(data)
 
-  # HF1 implies knowledge of phase 0, and this saves creating some other
+  # Altair implies knowledge of phase 0. This doesn't require creating a
   # module to merge such knowledge. Another approach is to have imported
   # set of phase 0/HF1 symbols be independently combined by each module,
   # when necessary, but that spreads such detailed abstraction knowledge
@@ -122,6 +122,7 @@ type
   # phase 0 version of symbols; anywhere which specially handles it will
   # have to do so itself.
   SomeBeaconState* = BeaconState | phase0.BeaconState
+  SomeHashedBeaconState* = HashedBeaconState | phase0.HashedBeaconState
 
 Json.useCustomSerialization(BeaconState.justification_bits):
   read:

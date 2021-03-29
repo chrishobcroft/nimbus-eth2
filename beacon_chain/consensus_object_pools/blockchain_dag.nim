@@ -55,7 +55,7 @@ proc updateStateData*(
 template withStateVars*(stateData: var StateData, body: untyped): untyped =
   ## Inject a few more descriptive names for the members of `stateData` -
   ## the stateData instance may get mutated through these names as well
-  template hashedState(): HashedBeaconState {.inject, used.} = stateData.data
+  template hashedState(): int {.inject, used.} = stateData.foobar
   template state(): BeaconState {.inject, used.} = stateData.data.data
   template blck(): BlockRef {.inject, used.} = stateData.blck
   template root(): Eth2Digest {.inject, used.} = stateData.data.root
@@ -707,8 +707,8 @@ proc applyBlock(
   doAssert state.blck == blck.refs.parent
 
   var statePtr = unsafeAddr state # safe because `restore` is locally scoped
-  func restore(v: var HashedBeaconState) =
-    doAssert (addr(statePtr.data) == addr v)
+  func restore(v: pointer) =
+    doAssert (unsafeAddr(statePtr.data) == v)
     statePtr[] = dag.headState
 
   loadStateCache(dag, cache, blck.refs, blck.data.message.slot.epoch)

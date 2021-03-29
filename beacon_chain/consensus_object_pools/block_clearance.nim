@@ -158,11 +158,11 @@ proc addRawBlockCheckStateTransition(
   ## addRawBlock - Ensure block can be applied on a state
   let
     poolPtr = unsafeAddr dag # safe because restore is short-lived
-  func restore(v: var HashedBeaconState) =
+  func restore(v: pointer) =
     # TODO address this ugly workaround - there should probably be a
     #      `state_transition` that takes a `StateData` instead and updates
     #      the block as well
-    doAssert v.addr == addr poolPtr.clearanceState.data
+    doAssert v == unsafeAddr poolPtr.clearanceState.data
     assign(poolPtr.clearanceState, poolPtr.headState)
 
   if not state_transition(dag.runtimePreset, dag.clearanceState.data, signedBlock,
