@@ -125,12 +125,6 @@ type
     # only accesses phase 0 definitions
     DOMAIN_SYNC_COMMITTEE = 7
 
-  # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/lightclient/beacon-chain.md#validator-action-flags
-  ValidatorFlag* = enum
-    TIMELY_HEAD_FLAG = 1
-    TIMELY_SOURCE_FLAG = 2
-    TIMELY_TARGET_FLAG = 4
-
   # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#custom-types
   Eth2Domain* = array[32, byte]
 

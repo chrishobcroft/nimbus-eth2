@@ -36,7 +36,7 @@ import
   json_serialization/types as jsonTypes,
   ../../ssz/types as sszTypes, ../crypto, ../digest, ../presets
 
-import ./base
+import ./base, ./phase0
 export base
 
 const
@@ -52,6 +52,9 @@ const
   SYNC_COMMITTEE_SUBNET_COUNT* = 8
 
 type
+  # https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.2/specs/altair/beacon-chain.md#custom-types
+  ParticipationFlags* = distinct uint8
+
   # https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.2/specs/altair/beacon-chain.md#syncaggregate
   SyncAggregate* = object
     sync_committee_bits*: BitArray[SYNC_COMMITTEE_SIZE]
@@ -121,7 +124,7 @@ type
     TIMELY_SOURCE_FLAG = 1
     TIMELY_TARGET_FLAG = 2
 
-  # https://github.com/ethereum/eth2.0-specs/blob/34cea67b91/specs/lightclient/beacon-chain.md#beaconstate
+  # https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.2/specs/altair/beacon-chain.md#beaconstate
   BeaconState* = object
     # Versioning
     genesis_time*: uint64
@@ -158,9 +161,9 @@ type
 
     # Participation
     previous_epoch_participation*:
-      HashList[ValidatorFlag, Limit VALIDATOR_REGISTRY_LIMIT]
+      HashList[ParticipationFlags, Limit VALIDATOR_REGISTRY_LIMIT]
     current_epoch_participation*:
-      HashList[ValidatorFlag, Limit VALIDATOR_REGISTRY_LIMIT]
+      HashList[ParticipationFlags, Limit VALIDATOR_REGISTRY_LIMIT]
 
     # Finality
     justification_bits*: uint8 ##\
