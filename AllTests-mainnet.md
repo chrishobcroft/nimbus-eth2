@@ -107,11 +107,10 @@ OK: 4/4 Fail: 0/4 Skip: 0/4
 OK: 3/3 Fail: 0/3 Skip: 0/3
 ## Interop
 ```diff
-+ Interop genesis                                                                            OK
 + Interop signatures                                                                         OK
 + Mocked start private key                                                                   OK
 ```
-OK: 3/3 Fail: 0/3 Skip: 0/3
+OK: 2/2 Fail: 0/2 Skip: 0/2
 ## Official - constants & config  [Preset: mainnet]
 ```diff
 + BASE_REWARD_FACTOR                                64                   [Preset: mainnet]   OK

@@ -28,10 +28,11 @@ import
   std/[macros, hashes, intsets, strutils, tables, typetraits],
   stew/[assign2, byteutils], chronicles,
   json_serialization,
-  ../../version, ../../ssz/types as sszTypes, ../crypto, ../digest, ../presets
+  ../../version, ../../ssz/types as sszTypes, ../crypto, ../digest, ../presets,
+  ./merge
 
 export
-  sszTypes, presets, json_serialization
+  sszTypes, merge, presets, json_serialization
 
 # Presently, we're reusing the data types from the serialization (uint64) in the
 # objects we pass around to the beacon chain logic, thus keeping the two
@@ -331,6 +332,7 @@ type
   GraffitiBytes* = distinct array[MAX_GRAFFITI_SIZE, byte]
 
   # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#beaconblockbody
+  # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#beaconblockbody
   BeaconBlockBody* = object
     randao_reveal*: ValidatorSig
     eth1_data*: Eth1Data
@@ -342,6 +344,8 @@ type
     attestations*: List[Attestation, Limit MAX_ATTESTATIONS]
     deposits*: List[Deposit, Limit MAX_DEPOSITS]
     voluntary_exits*: List[SignedVoluntaryExit, Limit MAX_VOLUNTARY_EXITS]
+
+    application_payload*: ApplicationPayload  # [New in Merge] application payload
 
   SigVerifiedBeaconBlockBody* = object
     ## A BeaconBlock body with signatures verified
@@ -366,6 +370,8 @@ type
     deposits*: List[Deposit, Limit MAX_DEPOSITS]
     voluntary_exits*: List[TrustedSignedVoluntaryExit, Limit MAX_VOLUNTARY_EXITS]
 
+    application_payload*: ApplicationPayload  # [New in Merge] application payload
+
   TrustedBeaconBlockBody* = object
     ## A full verified block
     randao_reveal*: TrustedSig
@@ -379,6 +385,8 @@ type
     deposits*: List[Deposit, Limit MAX_DEPOSITS]
     voluntary_exits*: List[TrustedSignedVoluntaryExit, Limit MAX_VOLUNTARY_EXITS]
 
+    application_payload*: ApplicationPayload  # [New in Merge] application payload
+
   SomeSignedBeaconBlock* = SignedBeaconBlock | SigVerifiedSignedBeaconBlock | TrustedSignedBeaconBlock
   SomeBeaconBlock* = BeaconBlock | SigVerifiedBeaconBlock | TrustedBeaconBlock
   SomeBeaconBlockBody* = BeaconBlockBody | SigVerifiedBeaconBlockBody | TrustedBeaconBlockBody
@@ -390,6 +398,7 @@ type
   SomeSignedVoluntaryExit* = SignedVoluntaryExit | TrustedSignedVoluntaryExit
 
   # https://github.com/ethereum/eth2.0-specs/blob/v1.0.1/specs/phase0/beacon-chain.md#beaconstate
+  # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#beaconstate
   BeaconState* = object
     # Versioning
     genesis_time*: uint64
@@ -441,6 +450,10 @@ type
 
     current_justified_checkpoint*: Checkpoint
     finalized_checkpoint*: Checkpoint
+
+    # Application-layer
+    application_state_root*: Eth2Digest # [New in Merge]
+    application_block_hash*: Eth2Digest # [New in Merge]
 
   # TODO Careful, not nil analysis is broken / incomplete and the semantics will
   #      likely change in future versions of the language:

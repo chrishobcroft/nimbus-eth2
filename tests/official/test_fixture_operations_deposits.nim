@@ -50,7 +50,3 @@ proc runTest(identifier: string) =
         check process_deposit(defaultRuntimePreset, preState[], deposit).isErr
 
   `testImpl _ operations_deposits _ identifier`()
-
-suiteReport "Official - Operations - Deposits " & preset():
-  for kind, path in walkDir(OperationsDepositsDir, true):
-    runTest(path)
