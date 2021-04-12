@@ -66,3 +66,11 @@ proc runTest(testName, testDir, unitTestName: string) =
         doAssert hashedPreState.root == postState[].hash_tree_root()
 
   `testImpl _ blck _ testName`()
+
+suiteReport "Official - Sanity - Blocks " & preset():
+  for kind, path in walkDir(SanityBlocksDir, true):
+    runTest("Official - Sanity - Blocks", SanityBlocksDir, path)
+
+suiteReport "Official - Finality " & preset():
+  for kind, path in walkDir(FinalityDir, true):
+    runTest("Official - Finality", FinalityDir, path)

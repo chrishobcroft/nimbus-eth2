@@ -46,13 +46,13 @@ type
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#applicationpayload
   ApplicationPayload* = object
     block_hash*: Eth2Digest  # Hash of application block
-    coinbase*: array[20, byte]  # TODO ensure Bytes20 SSZ encodes/decodes correctly
+    #coinbase*: array[20, byte]  # TODO ensure Bytes20 SSZ encodes/decodes correctly
     state_root*: Eth2Digest
     gas_limit*: uint64
     gas_used*: uint64
     receipt_root*: Eth2Digest
-    logs_bloom*: array[BYTES_PER_LOGS_BLOOM, byte]
-    transactions*: List[OpaqueTransaction, MAX_APPLICATION_TRANSACTIONS]
+    #logs_bloom*: array[BYTES_PER_LOGS_BLOOM, byte]
+    #transactions*: List[OpaqueTransaction, MAX_APPLICATION_TRANSACTIONS]
 
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#application-payload-processing
   ApplicationState* = object

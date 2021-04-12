@@ -122,3 +122,8 @@ proc runTest(rewardsDir, identifier: string) =
 
 
   `testImpl _ rewards _ identifier`()
+
+suiteReport "Official - Rewards " & preset():
+  for rewardsDir in [RewardsDirBasic, RewardsDirLeak, RewardsDirRandom]:
+    for kind, path in walkDir(rewardsDir, true):
+      runTest(rewardsDir, path)

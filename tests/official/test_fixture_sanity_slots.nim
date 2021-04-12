@@ -46,3 +46,7 @@ proc runTest(identifier: string) =
       reportDiff(newPreState, postState)
 
   `testImpl _ slots _ identifier`()
+
+suiteReport "Official - Sanity - Slots " & preset():
+  for kind, path in walkDir(SanitySlotsDir, true):
+    runTest(path)
