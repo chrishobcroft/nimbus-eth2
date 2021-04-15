@@ -37,6 +37,8 @@ const
   MAX_APPLICATION_TRANSACTIONS* = 16384
   BYTES_PER_LOGS_BLOOM* = 256
 
+  EVM_BLOCK_ROOTS_SIZE* = 8
+
 type
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#custom-types
   OpaqueTransaction* = List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
@@ -54,7 +56,14 @@ type
     r*: Eth2Digest
     s*: Eth2Digest
 
+  BeaconChainData* = object
+    slot*: uint64 # TODO Slot, but dependency issue wrt this/base
+    randao_mix*: Eth2Digest
+    timestamp*: uint64
+    recent_block_roots*: array[EVM_BLOCK_ROOTS_SIZE, Eth2Digest]
+
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#applicationpayload
+  # modified
   ApplicationPayload* = object
     block_hash*: Eth2Digest  # Hash of application block
     coinbase*: EthAddress
@@ -63,6 +72,7 @@ type
     gas_used*: uint64
     receipt_root*: Eth2Digest
     #logs_bloom*: array[BYTES_PER_LOGS_BLOOM, byte]
+    difficulty*: uint64
     transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
 
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#application-payload-processing
@@ -74,7 +84,7 @@ type
     discard
 
 proc fromHex*(T: typedesc[EthAddress], s: string): T =
-  hexToBytes(s, result)
+  hexToBytes(s, result.data)
 
 proc writeValue*(w: var JsonWriter, a: EthAddress) {.raises: [Defect, IOError, SerializationError].} =
   w.writeValue $a
