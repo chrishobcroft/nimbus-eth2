@@ -59,7 +59,7 @@ type
     gas_limit*: uint64
     gas_used*: uint64
     receipt_root*: Eth2Digest
-    #logs_bloom*: array[BYTES_PER_LOGS_BLOOM, byte]
+    logs_bloom*: array[BYTES_PER_LOGS_BLOOM, byte]
     difficulty*: uint64
     transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
 
