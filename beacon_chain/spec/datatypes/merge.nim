@@ -15,6 +15,7 @@
 import
   std/macros,
   stew/assign2,
+  json_serialization,
   json_serialization/types as jsonTypes,
   ../../ssz/types as sszTypes, ../digest,
   nimcrypto/utils
@@ -32,6 +33,9 @@ type
   OpaqueTransaction* = List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
   EthAddress* = object
     data*: array[20, byte]  # TODO there's a network_metadata type, but the import hierarchy's inconvenient without splitting out aspects of this module
+
+  BloomLogs* = object
+    data*: array[BYTES_PER_LOGS_BLOOM, byte]
 
   Eth1Transaction* = object
     nonce*: uint64
@@ -59,7 +63,7 @@ type
     gas_limit*: uint64
     gas_used*: uint64
     receipt_root*: Eth2Digest
-    logs_bloom*: array[BYTES_PER_LOGS_BLOOM, byte]
+    logs_bloom*: BloomLogs
     difficulty*: uint64
     transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
 
