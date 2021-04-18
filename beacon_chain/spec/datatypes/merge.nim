@@ -37,13 +37,16 @@ type
   BloomLogs* = object
     data*: array[BYTES_PER_LOGS_BLOOM, byte]
 
+  Eth1TransactionInput* = object
+    data*: List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
+
   Eth1Transaction* = object
     nonce*: uint64
     gas_price*: Eth2Digest
     gas_limit*: uint64
     recipient*: EthAddress
     value*: Eth2Digest
-    #input*: List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
+    input*: Eth1TransactionInput
     v*: Eth2Digest
     r*: Eth2Digest
     s*: Eth2Digest
