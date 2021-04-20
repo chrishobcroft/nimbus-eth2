@@ -78,7 +78,7 @@ def runStages() {
 			// we don't need to re-raise it here; it might be a PR build being cancelled by a newer one
 		}
 		// clean the workspace
-		cleanWs(disableDeferredWipeout: true, deleteDirs: true)
+		// cleanWs(disableDeferredWipeout: true, deleteDirs: true)
 	}
 }
 
