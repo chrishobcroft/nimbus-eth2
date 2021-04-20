@@ -95,25 +95,3 @@ proc readValue*(r: var JsonReader, a: var EthAddress) {.raises: [Defect, IOError
     a = fromHex(type(a), r.readValue(string))
   except ValueError:
     raiseUnexpectedValue(r, "Hex string expected")
-
-# TODO move these elsewhere
-
-# https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#get_pow_chain_head
-func get_pow_chain_head(): PowBlock =
-  discard
-
-# https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_application_payload
-when false:
-  func get_application_payload(state: BeaconState): ApplicationPayload =
-    if not is_transition_completed(state):
-      pow_block = get_pow_chain_head()
-      if pow_block.total_difficulty < TRANSITION_TOTAL_DIFFICULTY:
-        # Pre-merge, empty payload
-        return ApplicationPayload()
-      else:
-        # Signify merge via last PoW block_hash and an otherwise empty payload
-        return ApplicationPayload(block_hash=pow_block.block_hash)
-
-    # Post-merge, normal payload
-    application_parent_hash = state.application_block_hash
-    produce_application_payload(state.application_block_hash)
