@@ -11,6 +11,8 @@ import json, options, stint, ethtypes
 # https://github.com/gballet/go-ethereum/blob/catalyst-for-rayonism/eth/catalyst/api_test.go
 proc consensus_assembleBlock(blockParams: BlockParams): ApplicationPayload
 
+# TODO from the Catalyst side these don't seem to be exactly bools
+
 # basic flow appears to be consensus_NewBlock(consensus_AssembleBlock())
 # where tx pool is maintained by eth1 client and effectively accessed by
 # consensus_AssembleBlock(), which returns a value which is treatable as
