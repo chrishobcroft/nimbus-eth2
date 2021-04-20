@@ -40,6 +40,7 @@ type
   Eth1TransactionInput* = object
     data*: List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
 
+  # TODO check against catalyst-for-rayonism branch
   Eth1Transaction* = object
     nonce*: uint64
     gas_price*: Eth2Digest
@@ -57,21 +58,8 @@ type
     timestamp*: uint64
     recent_block_roots*: array[EVM_BLOCK_ROOTS_SIZE, Eth2Digest]
 
-  # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#applicationpayload
-  # modified
-  ApplicationPayload* = object
-    block_hash*: Eth2Digest  # Hash of application block
-    coinbase*: EthAddress
-    state_root*: Eth2Digest
-    gas_limit*: uint64
-    gas_used*: uint64
-    receipt_root*: Eth2Digest
-    logs_bloom*: BloomLogs
-    difficulty*: uint64
-    transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
-
   # https://github.com/gballet/go-ethereum/blob/7eea1cff4121d23ab4c8932ef33ff9b077a20da1/eth/catalyst/api_test.go#L151-L163
-  ExecutableData* = object
+  ApplicationPayload* = object
     parentHash*: Eth2Digest
     miner*: EthAddress
     stateRoot*: Eth2Digest
@@ -82,6 +70,11 @@ type
     blockHash*: Eth2Digest
     timestamp*: uint64
     number*: uint64
+
+  # https://github.com/gballet/go-ethereum/blob/7eea1cff4121d23ab4c8932ef33ff9b077a20da1/eth/catalyst/api_test.go#L130-L133
+  BlockParams* = object
+    parentHash*: Eth2Digest
+    timestamp*: uint64
 
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#application-payload-processing
   ApplicationState* = object
