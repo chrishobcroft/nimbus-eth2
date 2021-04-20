@@ -405,22 +405,16 @@ proc getBlockByNumber*(p: Web3DataProviderRef,
 # https://hackmd.io/@n0ble/ethereum_consensus_upgrade_mainnet_perspective#External-fork-choice-rule
 proc setHead*(m: Eth1Monitor,
               hash: Eth2Digest): Future[bool] =
-  if m.isNil or m.dataProvider.isNil:
-    return
   m.dataProvider[].web3.provider.consensus_setHead(hash)
 
 proc assembleBlock*(m: Eth1Monitor,
                     parentHash: Eth2Digest,
                     timestamp: uint64): Future[ApplicationPayload] =
-  if m.isNil or m.dataProvider.isNil:
-    return
   m.dataProvider[].web3.provider.consensus_assembleBlock(
     BlockParams(parentHash: parentHash, timestamp: timestamp))
 
 proc newBlock*(m: Eth1Monitor,
                executableData: ApplicationPayload): Future[bool] =
-  if m.isNil or m.dataProvider.isNil:
-    return
   m.dataProvider[].web3.provider.consensus_newBlock(executableData)
 
 template readJsonField(j: JsonNode, fieldName: string, ValueType: type): untyped =
