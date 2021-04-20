@@ -2020,3 +2020,7 @@ programMain:
   of wallets: doWallets(config, rng[])
   of record: doRecord(config, rng[])
   of web3: doWeb3Cmd(config)
+
+from os import DirSep, AltSep
+template sourceDir: string = currentSourcePath.rsplit({DirSep, AltSep}, 1)[0]
+createRpcSigs(RpcClient, sourceDir & "/rpc/eth_merge_sigs.nim")

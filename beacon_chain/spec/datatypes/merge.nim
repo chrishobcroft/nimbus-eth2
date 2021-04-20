@@ -70,6 +70,19 @@ type
     difficulty*: uint64
     transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
 
+  # https://github.com/gballet/go-ethereum/blob/7eea1cff4121d23ab4c8932ef33ff9b077a20da1/eth/catalyst/api_test.go#L151-L163
+  ExecutableData* = object
+    parentHash*: Eth2Digest
+    miner*: EthAddress
+    stateRoot*: Eth2Digest
+    gasLimit*: uint64
+    gasUsed*: uint64
+    transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
+    receiptRoot*: Eth2Digest
+    blockHash*: Eth2Digest
+    timestamp*: uint64
+    number*: uint64
+
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#application-payload-processing
   ApplicationState* = object
     discard
