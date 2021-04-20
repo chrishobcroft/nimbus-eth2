@@ -20,6 +20,8 @@ import
   ".."/[beacon_chain_db, beacon_node_status],
   ./merkle_minimal
 
+import ../eth2_merge_web3.nim
+
 export
   web3Types
 
@@ -398,6 +400,10 @@ proc getBlockByNumber*(p: Web3DataProviderRef,
   let hexNumber = try: &"0x{number:X}" # No leading 0's!
   except ValueError as exc: raiseAssert exc.msg # Never fails
   p.web3.provider.eth_getBlockByNumber(hexNumber, false)
+
+proc setHead*(m: Eth1Monitor,
+              hash: Eth2Digest): Future[bool] =
+  m.dataProvider[].web3.provider.consensus_setHead(hash)
 
 template readJsonField(j: JsonNode, fieldName: string, ValueType: type): untyped =
   var res: ValueType
