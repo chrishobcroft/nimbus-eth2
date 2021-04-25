@@ -21,68 +21,43 @@ import
   nimcrypto/utils
 
 const
-  # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/beacon-chain.md#execution
+  # https://github.com/ethereum/eth2.0-specs/blob/e895c29f3f42382a0c913f3d0fd33522d7db9e87/specs/merge/beacon-chain.md#execution
   MAX_BYTES_PER_OPAQUE_TRANSACTION* = 1048576
-  MAX_APPLICATION_TRANSACTIONS* = 16384
+  MAX_EXECUTION_TRANSACTIONS* = 16384
   BYTES_PER_LOGS_BLOOM* = 256
 
   EVM_BLOCK_ROOTS_SIZE* = 8
 
 type
   # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#custom-types
-  OpaqueTransaction* = List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
+  # TODO is this maneuver sizeof()/memcpy()/SSZ-equivalent? Pretty sure, but not 100% certain
+  OpaqueTransaction* = object
+    data*: List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
+
   EthAddress* = object
     data*: array[20, byte]  # TODO there's a network_metadata type, but the import hierarchy's inconvenient without splitting out aspects of this module
 
   BloomLogs* = object
     data*: array[BYTES_PER_LOGS_BLOOM, byte]
 
-  Eth1TransactionInput* = object
-    data*: List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION]
-
-  # TODO check against catalyst-for-rayonism branch
-  Eth1Transaction* = object
-    nonce*: uint64
-    gas_price*: Eth2Digest
-    gas_limit*: uint64
-    recipient*: EthAddress
-    value*: Eth2Digest
-    input*: Eth1TransactionInput
-    v*: Eth2Digest
-    r*: Eth2Digest
-    s*: Eth2Digest
-
-  BeaconChainData* = object
-    slot*: uint64 # TODO Slot, but dependency issue wrt this/base
-    randao_mix*: Eth2Digest
-    timestamp*: uint64
-    recent_block_roots*: array[EVM_BLOCK_ROOTS_SIZE, Eth2Digest]
-
-  # https://github.com/gballet/go-ethereum/blob/7eea1cff4121d23ab4c8932ef33ff9b077a20da1/eth/catalyst/api_test.go#L151-L163
-  ApplicationPayload* = object
-    parentHash*: Eth2Digest
-    miner*: EthAddress
-    stateRoot*: Eth2Digest
-    gasLimit*: uint64
-    gasUsed*: uint64
-    transactions*: List[Eth1Transaction, MAX_APPLICATION_TRANSACTIONS]
-    receiptRoot*: Eth2Digest
-    blockHash*: Eth2Digest
-    timestamp*: uint64
+  # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/beacon-chain.md#executionpayload
+  ExecutionPayload* = object
+    block_hash*: Eth2Digest  # Hash of execution block
+    parent_hash*: Eth2Digest
+    coinbase*: EthAddress
+    state_root*: Eth2Digest
     number*: uint64
+    gas_limit*: uint64
+    gas_used*: uint64
+    timestamp*: uint64
+    receipt_root*: Eth2Digest
+    logs_bloom*: BloomLogs
+    transactions*: List[OpaqueTransaction, MAX_EXECUTION_TRANSACTIONS]
 
   # https://github.com/gballet/go-ethereum/blob/7eea1cff4121d23ab4c8932ef33ff9b077a20da1/eth/catalyst/api_test.go#L130-L133
   BlockParams* = object
     parentHash*: Eth2Digest
-    timestamp*: uint64
-
-  # https://github.com/ethereum/eth2.0-specs/blob/eca6bd7d622a0cfb7343bff742da046ed25b3825/specs/merge/beacon-chain.md#application-payload-processing
-  ApplicationState* = object
-    discard
-
-  # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#get_pow_chain_head
-  PowBlock* = object
-    discard
+    timestamp*: string
 
 proc fromHex*(T: typedesc[EthAddress], s: string): T =
   hexToBytes(s, result.data)

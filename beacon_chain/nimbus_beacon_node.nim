@@ -351,8 +351,10 @@ proc init*(T: type BeaconNode,
         )
     validatorPool = newClone(ValidatorPool.init(slashingProtectionDB))
 
+    web3Provider =  waitFor newWeb3DataProvider(depositContractAddress, config.web3Urls[0]) # TODO waitFor etc
+
     consensusManager = ConsensusManager.new(
-      chainDag, attestationPool, quarantine, eth1Monitor
+      chainDag, attestationPool, quarantine, web3Provider.get
     )
     verifQueues = VerifQueueManager.new(
       config.dumpEnabled, config.dumpDirInvalid, config.dumpDirIncoming,
@@ -389,7 +391,8 @@ proc init*(T: type BeaconNode,
     processor: processor,
     verifQueues: verifQueues,
     consensusManager: consensusManager,
-    requestManager: RequestManager.init(network, verifQueues)
+    requestManager: RequestManager.init(network, verifQueues),
+    web3Provider: web3Provider.get
   )
 
   # set topic validation routine

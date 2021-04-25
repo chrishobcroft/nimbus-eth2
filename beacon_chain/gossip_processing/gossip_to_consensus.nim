@@ -410,9 +410,9 @@ proc runQueueProcessingLoop*(self: ref VerifQueueManager) {.async.} =
     # attestations which individually have the smallest effect on chain progress
     if blockFut.finished:
       let
-        eth1Monitor = self.consensusManager.eth1Monitor
+        web3Provider = self.consensusManager.web3Provider
         blck = blockFut.read()
-      if self[].processBlock(blck) and not eth1Monitor.isNil:
+      if self[].processBlock(blck):
         # https://notes.ethereum.org/@n0ble/rayonism-the-merge-spec states that
         # this timestamp is the unix timestamp of a new block. getTime's int64,
         # but not negative, so this type conversion is safe.
@@ -421,9 +421,9 @@ proc runQueueProcessingLoop*(self: ref VerifQueueManager) {.async.} =
         # ordered, but worth checking.
         let curTime = toUnix(getTime())
         doAssert curTime >= 0
-        let executableBlock = await eth1Monitor.assembleBlock(
+        let executableBlock = await web3Provider.assembleBlock(
           blck.v.blk.message.parent_root, curTime.uint64)
-        discard await eth1Monitor.newBlock(executableBlock)
+        discard await web3Provider.newBlock(executableBlock)
       blockFut = self[].blocksQueue.popFirst()
     elif aggregateFut.finished:
       # aggregates will be dropped under heavy load on producer side

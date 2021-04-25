@@ -21,6 +21,7 @@ import
   ./merkle_minimal
 
 import ../eth2_merge_web3.nim
+import web3/ethhexstrings
 
 export
   web3Types
@@ -403,19 +404,21 @@ proc getBlockByNumber*(p: Web3DataProviderRef,
 
 # setHead/newBlock used as part of
 # https://hackmd.io/@n0ble/ethereum_consensus_upgrade_mainnet_perspective#External-fork-choice-rule
-proc setHead*(m: Eth1Monitor,
+proc setHead*(p: Web3DataProviderRef,
               hash: Eth2Digest): Future[bool] =
-  m.dataProvider[].web3.provider.consensus_setHead(hash)
+  p.web3.provider.consensus_setHead(hash)
 
-proc assembleBlock*(m: Eth1Monitor,
+proc assembleBlock*(p: Web3DataProviderRef,
                     parentHash: Eth2Digest,
-                    timestamp: uint64): Future[ApplicationPayload] =
-  m.dataProvider[].web3.provider.consensus_assembleBlock(
-    BlockParams(parentHash: parentHash, timestamp: timestamp))
+                    timestamp: uint64): Future[ExecutionPayload] =
+  let ts = encodeQuantity(timestamp)
+  info "FOO1 assembleBlock", parentHash, ts
+  p.web3.provider.consensus_assembleBlock(
+    BlockParams(parentHash: parentHash, timestamp: ts))
 
-proc newBlock*(m: Eth1Monitor,
-               executableData: ApplicationPayload): Future[bool] =
-  m.dataProvider[].web3.provider.consensus_newBlock(executableData)
+proc newBlock*(p: Web3DataProviderRef,
+               executableData: ExecutionPayload): Future[bool] =
+  p.web3.provider.consensus_newBlock(executableData)
 
 template readJsonField(j: JsonNode, fieldName: string, ValueType: type): untyped =
   var res: ValueType
@@ -768,6 +771,14 @@ proc new(T: type Web3DataProvider,
     ns = web3.contractSender(DepositContract, depositContractAddress)
 
   return ok Web3DataProviderRef(url: web3Url, web3: web3, ns: ns)
+
+# route around eth1 monitor initialization gating; intentionally a bit clunky
+proc newWeb3DataProvider*(depositContractAddress: Eth1Address, web3Url: string):
+    Future[Result[Web3DataProviderRef, string]]=
+  info "FOO9",
+    depositContractAddress,
+    web3Url
+  return Web3DataProvider.new(depositContractAddress, web3Url)
 
 proc putInitialDepositContractSnapshot*(db: BeaconChainDB,
                                         s: DepositContractSnapshot) =
