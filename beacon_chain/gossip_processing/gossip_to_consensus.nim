@@ -413,17 +413,21 @@ proc runQueueProcessingLoop*(self: ref VerifQueueManager) {.async.} =
         web3Provider = self.consensusManager.web3Provider
         blck = blockFut.read()
       if self[].processBlock(blck):
-        # https://notes.ethereum.org/@n0ble/rayonism-the-merge-spec states that
-        # this timestamp is the unix timestamp of a new block. getTime's int64,
-        # but not negative, so this type conversion is safe.
+        # TODO factor this out using
+        # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_execution_payload
+        # def get_execution_payload(state: BeaconState) -> ExecutionPayload:
         # TODO make sure this doesn't increase latency unduly. it's not as bad,
         # since blocks are the most important thing already, and the awaits are
         # ordered, but worth checking.
+        # TODO getTime() isn't correct; it's slot time
         let curTime = toUnix(getTime())
-        doAssert curTime >= 0
+        info "FOO4: calling web3Provider.assembleBlock from runQueueProcessingLoop",
+          parent_root = blck.v.blk.message.parent_root,
+          curTime
         let executableBlock = await web3Provider.assembleBlock(
           blck.v.blk.message.parent_root, curTime.uint64)
         discard await web3Provider.newBlock(executableBlock)
+
       blockFut = self[].blocksQueue.popFirst()
     elif aggregateFut.finished:
       # aggregates will be dropped under heavy load on producer side

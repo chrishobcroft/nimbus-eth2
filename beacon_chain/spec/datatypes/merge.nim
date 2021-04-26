@@ -18,6 +18,7 @@ import
   json_serialization,
   json_serialization/types as jsonTypes,
   ../../ssz/types as sszTypes, ../digest,
+  #web3/ethtypes,
   nimcrypto/utils
 
 const
@@ -54,9 +55,8 @@ type
     logs_bloom*: BloomLogs
     transactions*: List[OpaqueTransaction, MAX_EXECUTION_TRANSACTIONS]
 
-  # https://github.com/gballet/go-ethereum/blob/7eea1cff4121d23ab4c8932ef33ff9b077a20da1/eth/catalyst/api_test.go#L130-L133
   BlockParams* = object
-    parentHash*: Eth2Digest
+    parentHash*: string
     timestamp*: string
 
 proc fromHex*(T: typedesc[EthAddress], s: string): T =

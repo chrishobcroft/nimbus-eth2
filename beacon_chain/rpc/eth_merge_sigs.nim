@@ -11,4 +11,4 @@ import json, options, stint, ethtypes
 proc consensus_assembleBlock(blockParams: BlockParams): ExecutionPayload
 proc consensus_newBlock(executableData: ExecutionPayload): bool
 proc consensus_finalizeBlock(blockHash: Eth2Digest): bool
-proc consensus_setHead(newHead: Eth2Digest): bool
+proc consensus_setHead(newHead: string): bool

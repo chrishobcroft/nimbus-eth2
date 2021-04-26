@@ -254,7 +254,7 @@ proc makeBeaconBlockForHeadAndSlot*(node: BeaconNode,
                                     validator_index: ValidatorIndex,
                                     graffiti: GraffitiBytes,
                                     head: BlockRef,
-                                    slot: Slot): Option[BeaconBlock] =
+                                    slot: Slot): Future[Option[BeaconBlock]] {.async.} =
   # Advance state to the slot that we're proposing for
 
   let
@@ -277,7 +277,7 @@ proc makeBeaconBlockForHeadAndSlot*(node: BeaconNode,
       doAssert v.addr == addr proposalStateAddr.data
       assign(proposalStateAddr[], poolPtr.headState)
 
-    makeBeaconBlock(
+    return makeBeaconBlock(
       node.runtimePreset,
       hashedState,
       validator_index,
@@ -357,7 +357,7 @@ proc proposeBlock(node: BeaconNode,
   let
     randao = await validator.genRandaoReveal(
       fork, genesis_validators_root, slot)
-    message = makeBeaconBlockForHeadAndSlot(
+    message = await makeBeaconBlockForHeadAndSlot(
       node, randao, validator_index, node.graffitiBytes, head, slot)
   if not message.isSome():
     return head # already logged elsewhere!
@@ -378,13 +378,17 @@ proc proposeBlock(node: BeaconNode,
   newBlock.signature = await validator.signBlockProposal(
     fork, genesis_validators_root, slot, newBlock.root)
 
-  # https://notes.ethereum.org/@n0ble/rayonism-the-merge-spec suggests that
-  # current time is currect here.
+  # TODO getTime() isn't correct; it's slot time
+  # TODO factor this out using
+  # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_execution_payload
+  # def get_execution_payload(state: BeaconState) -> ExecutionPayload:
   let curTime = toUnix(getTime())
-  doAssert curTime >= 0
+  info "FOO2: calling RPC assembleBlockfrom proposeBlock",
+    parent_root = newBlock.message.parent_root,
+    curTime
   let executableBlock = await node.web3Provider.assembleBlock(
     newBlock.message.parent_root, curTime.uint64)
-  info "calling RPC newBlock",
+  info "FOO3: calling RPC newBlock from proposeBlock",
     parent_root = newBlock.message.parent_root,
     curTime
   doAssert await node.web3Provider.newBlock(executableBlock)
