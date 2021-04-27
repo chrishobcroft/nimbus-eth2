@@ -22,7 +22,7 @@ import
   # Local modules
   ../spec/[
     datatypes, digest, crypto, helpers, network, signatures, state_transition,
-    validator],
+    state_transition_block, validator],
   ../conf, ../beacon_clock,
   ../consensus_object_pools/[
     spec_cache, blockchain_dag, block_clearance,
@@ -34,8 +34,6 @@ import
   ./slashing_protection, ./attestation_aggregation,
   ./validator_pool, ./keystore_management,
   ../gossip_processing/consensus_manager
-
-from times import getTime, toUnix
 
 # Metrics for tracking attestation and beacon block loss
 const delayBuckets = [-Inf, -4.0, -2.0, -1.0, -0.5, -0.1, -0.05,
@@ -249,6 +247,22 @@ proc getBlockProposalEth1Data*(node: BeaconNode,
       stateData.data.data, finalizedEpochRef.eth1_data,
       finalizedEpochRef.eth1_deposit_index)
 
+# https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_execution_payload
+proc getExecutionPayload(node: BeaconNode, state: BeaconState):
+    Future[ExecutionPayload] {.async.} =
+  doAssert is_transition_completed(state)  # Rayonism
+
+  # Post-merge, normal payload
+  let
+    execution_parent_hash = state.latest_execution_payload_header.block_hash
+    timestamp = compute_time_at_slot(state, state.slot)
+
+  info "FOO4: calling web3Provider.assembleBlock from runQueueProcessingLoop",
+    execution_parent_hash,
+    timestamp
+  return await node.web3Provider.assembleBlock(
+    execution_parent_hash, timestamp)
+
 proc makeBeaconBlockForHeadAndSlot*(node: BeaconNode,
                                     randao_reveal: ValidatorSig,
                                     validator_index: ValidatorIndex,
@@ -290,6 +304,7 @@ proc makeBeaconBlockForHeadAndSlot*(node: BeaconNode,
       node.exitPool[].getProposerSlashingsForBlock(),
       node.exitPool[].getAttesterSlashingsForBlock(),
       node.exitPool[].getVoluntaryExitsForBlock(),
+      await node.getExecutionPayload(state),
       restore,
       cache)
 
@@ -378,20 +393,16 @@ proc proposeBlock(node: BeaconNode,
   newBlock.signature = await validator.signBlockProposal(
     fork, genesis_validators_root, slot, newBlock.root)
 
-  # TODO getTime() isn't correct; it's slot time
-  # TODO factor this out using
-  # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_execution_payload
-  # def get_execution_payload(state: BeaconState) -> ExecutionPayload:
-  let curTime = toUnix(getTime())
-  info "FOO2: calling RPC assembleBlockfrom proposeBlock",
-    parent_root = newBlock.message.parent_root,
-    curTime
-  let executableBlock = await node.web3Provider.assembleBlock(
-    newBlock.message.parent_root, curTime.uint64)
+  # TODO this shouldn't be necessary -- check if the same node calls the same
+  # hash from both here and gossip_to_consensus. It's also actually incorrect
+  # since the network send could fail, in which case it is not really part of
+  # the chain.
   info "FOO3: calling RPC newBlock from proposeBlock",
-    parent_root = newBlock.message.parent_root,
-    curTime
-  doAssert await node.web3Provider.newBlock(executableBlock)
+    parent_hash = newBlock.message.body.execution_payload.parent_hash,
+    block_hash = newBlock.message.body.execution_payload.block_hash
+
+  discard await node.web3Provider.newBlock(
+    newBlock.message.body.execution_payload)
 
   return node.proposeSignedBlock(head, validator, newBlock)
 

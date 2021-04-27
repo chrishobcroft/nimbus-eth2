@@ -70,3 +70,8 @@ proc readValue*(r: var JsonReader, a: var EthAddress) {.raises: [Defect, IOError
     a = fromHex(type(a), r.readValue(string))
   except ValueError:
     raiseUnexpectedValue(r, "Hex string expected")
+
+# https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/beacon-chain.md#is_transition_completed
+func is_transition_completed*(state: auto): bool =
+  # Rayonism starts post-merge
+  true

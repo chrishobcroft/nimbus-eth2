@@ -115,6 +115,7 @@ proc addTestBlock*(
       @[],
       @[],
       @[],
+      ExecutionPayload(),
       noRollback,
       cache)
 

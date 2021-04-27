@@ -16,8 +16,6 @@ import
   ../ssz/sszdump,
   ../eth1/eth1_monitor
 
-from times import getTime, toUnix
-
 # Gossip Queue Manager
 # ------------------------------------------------------------------------------
 # The queue manager moves blocks from "Gossip validated" to "Consensus verified"
@@ -409,24 +407,13 @@ proc runQueueProcessingLoop*(self: ref VerifQueueManager) {.async.} =
     # process but might have a big impact on fork choice - last come
     # attestations which individually have the smallest effect on chain progress
     if blockFut.finished:
-      let
-        web3Provider = self.consensusManager.web3Provider
-        blck = blockFut.read()
+      let blck = blockFut.read()
       if self[].processBlock(blck):
-        # TODO factor this out using
-        # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_execution_payload
-        # def get_execution_payload(state: BeaconState) -> ExecutionPayload:
-        # TODO make sure this doesn't increase latency unduly. it's not as bad,
-        # since blocks are the most important thing already, and the awaits are
-        # ordered, but worth checking.
-        # TODO getTime() isn't correct; it's slot time
-        let curTime = toUnix(getTime())
-        info "FOO4: calling web3Provider.assembleBlock from runQueueProcessingLoop",
-          parent_root = blck.v.blk.message.parent_root,
-          curTime
-        let executableBlock = await web3Provider.assembleBlock(
-          blck.v.blk.message.parent_root, curTime.uint64)
-        discard await web3Provider.newBlock(executableBlock)
+        info "FOO2: calling RPC newBlock from runQueueProcessingLoop",
+          parent_hash = blck.v.blk.message.body.execution_payload.parent_hash,
+          block_hash = blck.v.blk.message.body.execution_payload.block_hash
+        discard await self.consensusManager.web3Provider.newBlock(
+          blck.v.blk.message.body.execution_payload)
 
       blockFut = self[].blocksQueue.popFirst()
     elif aggregateFut.finished:
