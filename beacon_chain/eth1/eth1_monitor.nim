@@ -405,11 +405,11 @@ proc getBlockByNumber*(p: Web3DataProviderRef,
 
 # setHead/newBlock used as part of
 # https://hackmd.io/@n0ble/ethereum_consensus_upgrade_mainnet_perspective#External-fork-choice-rule
-proc setHead*(p: Web3DataProviderRef, hash: Eth2Digest): Future[bool] =
+proc setHead*(p: Web3DataProviderRef, hash: Eth2Digest): Future[BoolReturnSuccessRPC] =
   p.web3.provider.consensus_setHead("0x" & hash.data.toHex)
 
 proc assembleBlock*(p: Web3DataProviderRef, parentHash: Eth2Digest,
-                    timestamp: uint64): Future[ExecutionPayload] =
+                    timestamp: uint64): Future[ExecutionPayloadRPC] =
   let
     ts = encodeQuantity(timestamp)
     ph = "0x" & parentHash.data.toHex
@@ -418,8 +418,25 @@ proc assembleBlock*(p: Web3DataProviderRef, parentHash: Eth2Digest,
     BlockParams(parentHash: ph, timestamp: ts))
 
 proc newBlock*(p: Web3DataProviderRef,
-               executableData: ExecutionPayload): Future[bool] =
-  p.web3.provider.consensus_newBlock(executableData)
+               executableData: ExecutionPayload): Future[BoolReturnValidRPC] =
+  info "FOO8a: in eth1Monitor.newBlock()",
+    executableData
+  let executableDataRPC = ExecutionPayloadRPC(
+    # TODO "0x" & foo refactor
+    parentHash: "0x" & executableData.parent_hash.data.toHex,
+    miner: "0x" & executableData.coinbase.data.toHex,  #TODO
+    stateRoot: "0x" & executableData.state_root.data.toHex,
+    number: encodeQuantity(executableData.number),
+    gasLimit: encodeQuantity(executableData.gas_limit),
+    gasUsed: encodeQuantity(executableData.gas_used),
+    timestamp: encodeQuantity(executableData.timestamp),
+    receiptsRoot: "0x" & executableData.receipt_root.data.toHex,
+    logsBloom: "0x" & executableData.logs_bloom.data.toHex,
+    blockHash: "0x" & executableData.block_hash.data.toHex
+    ) # TODO transactions: executableData.transactions
+  info "FOO8b: in eth1Monitor.newBlock()",
+    executableDataRPC
+  p.web3.provider.consensus_newBlock(executableDataRPC)
 
 proc getEarliestBlock*(p: Web3DataProviderRef): Future[BlockObject] =
   # mostly want the hash field

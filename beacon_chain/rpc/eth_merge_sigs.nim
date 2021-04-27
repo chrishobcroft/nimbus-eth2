@@ -8,7 +8,7 @@ import json, options, stint, ethtypes
 # https://notes.ethereum.org/@n0ble/rayonism-the-merge-spec
 # https://github.com/gballet/go-ethereum/blob/catalyst-for-rayonism/eth/catalyst/api.go
 # https://github.com/gballet/go-ethereum/blob/catalyst-for-rayonism/eth/catalyst/api_test.go
-proc consensus_assembleBlock(blockParams: BlockParams): ExecutionPayload
-proc consensus_newBlock(executableData: ExecutionPayload): bool
-proc consensus_finalizeBlock(blockHash: Eth2Digest): bool
-proc consensus_setHead(newHead: string): bool
+proc consensus_assembleBlock(blockParams: BlockParams): ExecutionPayloadRPC
+proc consensus_newBlock(executableData: ExecutionPayloadRPC): BoolReturnValidRPC
+proc consensus_finalizeBlock(blockHash: Eth2Digest): BoolReturnValidRPC
+proc consensus_setHead(newHead: string): BoolReturnSuccessRPC
