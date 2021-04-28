@@ -409,11 +409,8 @@ proc runQueueProcessingLoop*(self: ref VerifQueueManager) {.async.} =
     if blockFut.finished:
       let blck = blockFut.read()
       if self[].processBlock(blck):
-        info "FOO2: calling RPC newBlock from runQueueProcessingLoop",
-          parent_hash = blck.v.blk.message.body.execution_payload.parent_hash,
-          block_hash = blck.v.blk.message.body.execution_payload.block_hash
-        discard await self.consensusManager.web3Provider.newBlock(
-          blck.v.blk.message.body.execution_payload)
+        doAssert (await self.consensusManager.web3Provider.newBlock(
+          blck.v.blk.message.body.execution_payload)).valid
 
       blockFut = self[].blocksQueue.popFirst()
     elif aggregateFut.finished:

@@ -410,12 +410,12 @@ proc setHead*(p: Web3DataProviderRef, hash: Eth2Digest): Future[BoolReturnSucces
 
 proc assembleBlock*(p: Web3DataProviderRef, parentHash: Eth2Digest,
                     timestamp: uint64): Future[ExecutionPayloadRPC] =
-  let
-    ts = encodeQuantity(timestamp)
-    ph = "0x" & parentHash.data.toHex
-  info "FOO1 assembleBlock", ph, ts
+  # TODO encapsulate this "0x" & foo.toHex pattern, e.g.,
+  # encodeQuantityHex()
   p.web3.provider.consensus_assembleBlock(
-    BlockParams(parentHash: ph, timestamp: ts))
+    BlockParams(
+      parentHash: "0x" & parentHash.data.toHex,
+      timestamp: encodeQuantity(timestamp)))
 
 proc newBlock*(p: Web3DataProviderRef,
                executableData: ExecutionPayload): Future[BoolReturnValidRPC] =
