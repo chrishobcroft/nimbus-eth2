@@ -81,6 +81,9 @@ type
   BoolReturnSuccessRPC* = object
     success*: bool
 
+proc fromHex*(T: typedesc[BloomLogs], s: string): T =
+  hexToBytes(s, result.data)
+
 proc fromHex*(T: typedesc[EthAddress], s: string): T =
   hexToBytes(s, result.data)
 

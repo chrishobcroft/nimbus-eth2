@@ -9,7 +9,7 @@
 - Clone https://github.com/protolambda/mergenet-tutorial
 - Navigate to `rpc_examples` and run `consensus_assembleBlock.sh`, `consensus_newBlock.sh`, `consensus_setHead.sh`, and `
 get_genesis_hash.sh` to verify that Catalyst is properly configured.
-- If issues present themselves here, or when Nimbus attempts to use the API, one can `debug.verbosity(5)` console command in Catalyst.
+- If issues present themselves here, or when Nimbus attempts to use the API, one can `debug.verbosity(4)` console command in Catalyst.
 
 # How to run Nimbus
 
@@ -20,5 +20,10 @@ get_genesis_hash.sh` to verify that Catalyst is properly configured.
 
 # How to post a transaction
 
-TODO get screenshots
-basically, use metamask to connect to localhost, and do a transaction from an account configured at genesis to have a balance
+- Set up the MetaMask Chrome extension and use the seed phrase corresponding to an address with funds at genesis.
+- Configure the localhost:8545 network to use the Chain ID corresponding to the Catalyst chain configuration.
+![./rayonism_metamask_network_setup.png](./rayonism_metamask_network_setup.png)
+- Create a transaction from that account to another address.
+![./rayonism_metamask_send_eth.png](./rayonism_metamask_send_eth.png)
+- Run the local testnet to confirm the transaction.
+![./rayonism_metamask_transaction_confirmation.png](./rayonism_metamask_transaction_confirmation.png)
