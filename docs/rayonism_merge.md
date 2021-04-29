@@ -16,6 +16,8 @@ get_genesis_hash.sh` to verify that Catalyst is properly configured.
 - Check out branch `quick-merge-v1`
 - Run `./scripts/launch_local_testnet.sh --testnet 0 --nodes 4 --disable-htop --stop-at-epoch 8 -- --verify-finalization --discv5:no`
 
+![./rayonism_catalyst_logs.png](./rayonism_catalyst_logs.png)
+
 # How to post a transaction
 
 TODO get screenshots
