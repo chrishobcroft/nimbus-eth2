@@ -252,8 +252,6 @@ proc getBlockProposalEth1Data*(node: BeaconNode,
 # TODO tests, round-trip etc with encodeOpaqueTransaction
 func getOpaqueTransaction(s_orig: string): OpaqueTransaction =
   var bytes: seq[byte]
-  # TODO sequtils2 mapIt
-  # TODO toOpenArray probably more efficient but changes type,
   # so parseHexStr can't be used
   var s = s_orig
   s.removePrefix("0x")
