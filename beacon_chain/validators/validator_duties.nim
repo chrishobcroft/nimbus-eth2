@@ -249,6 +249,22 @@ proc getBlockProposalEth1Data*(node: BeaconNode,
       stateData.data.data, finalizedEpochRef.eth1_data,
       finalizedEpochRef.eth1_deposit_index)
 
+# TODO tests, round-trip etc with encodeOpaqueTransaction
+func getOpaqueTransaction(s_orig: string): OpaqueTransaction =
+  var bytes: seq[byte]
+  # TODO sequtils2 mapIt
+  # TODO toOpenArray probably more efficient but changes type,
+  # so parseHexStr can't be used
+  var s = s_orig
+  s.removePrefix("0x")
+  try:
+    for c in parseHexStr(s).items():
+      bytes.add byte(c)
+    OpaqueTransaction(data: List[byte, MAX_BYTES_PER_OPAQUE_TRANSACTION].init(
+      bytes))
+  except ValueError:
+    raiseAssert "Geth returned invalidly formatted transaction"
+
 # https://github.com/ethereum/eth2.0-specs/blob/dev/specs/merge/validator.md#produce_execution_payload
 proc getExecutionPayload(node: BeaconNode, state: BeaconState):
     Future[ExecutionPayload] {.async.} =
@@ -263,9 +279,6 @@ proc getExecutionPayload(node: BeaconNode, state: BeaconState):
     execution_parent_hash = state.latest_execution_payload_header.block_hash
     timestamp = compute_time_at_slot(state, state.slot)
 
-  info "FOO6a: got executionPayloadRPC",
-    execution_parent_hash,
-    timestamp
   let
     executionPayloadRPC = await node.web3Provider.assembleBlock(
       execution_parent_hash, timestamp)
@@ -285,7 +298,9 @@ proc getExecutionPayload(node: BeaconNode, state: BeaconState):
       gas_limit: phi(executionPayloadRPC.gasLimit),
       gas_used: phi(executionPayloadRPC.gasUsed),
       timestamp: phi(executionPayloadRPC.timestamp),
-      receipt_root: Eth2Digest.fromHex(executionPayloadRPC.receiptsRoot))
+      receipt_root: Eth2Digest.fromHex(executionPayloadRPC.receiptsRoot),
+      transactions: List[OpaqueTransaction, MAX_EXECUTION_TRANSACTIONS].init(
+        mapIt(executionPayloadRPC.transactions, it.getOpaqueTransaction)))
   info "FOO6c: got executionPayloadRPC",
     execution_parent_hash,
     timestamp,

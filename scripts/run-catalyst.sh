@@ -3,6 +3,8 @@
 # https://github.com/prysmaticlabs/bazel-go-ethereum/blob/catalyst/run-catalyst.sh
 
 # To increase verbosity: debug.verbosity(5) or debug.verbosity(6)
+# MetaMask seed phrase for account with balance is
+# lecture manual soon title cloth uncle gesture cereal common fruit tooth crater
 
 echo \{ \
   \"config\": \{ \
@@ -17,7 +19,7 @@ echo \{ \
     \"istanbulBlock\": 0, \
     \"catalystBlock\": 0 \
   \}, \
-  \"alloc\": \{\}, \
+  \"alloc\": \{\"0x4A55eF8869af149aea4E07874cd8598044Eea2cb\": \{\"balance\": \"1000000000000000000\"\}\}, \
   \"coinbase\": \"0x0000000000000000000000000000000000000000\", \
   \"difficulty\": \"0x20000\", \
   \"extraData\": \"\", \

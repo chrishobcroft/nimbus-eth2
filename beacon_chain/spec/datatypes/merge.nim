@@ -69,7 +69,7 @@ type
     timestamp*: string
     receiptsRoot*: string
     logsBloom*: string
-    transactions*: List[OpaqueTransaction, MAX_EXECUTION_TRANSACTIONS]
+    transactions*: List[string, MAX_EXECUTION_TRANSACTIONS]
 
   BlockParams* = object
     parentHash*: string

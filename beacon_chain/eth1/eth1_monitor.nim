@@ -403,8 +403,6 @@ proc getBlockByNumber*(p: Web3DataProviderRef,
   except ValueError as exc: raiseAssert exc.msg # Never fails
   p.web3.provider.eth_getBlockByNumber(hexNumber, false)
 
-# setHead/newBlock used as part of
-# https://hackmd.io/@n0ble/ethereum_consensus_upgrade_mainnet_perspective#External-fork-choice-rule
 proc setHead*(p: Web3DataProviderRef, hash: Eth2Digest): Future[BoolReturnSuccessRPC] =
   p.web3.provider.consensus_setHead("0x" & hash.data.toHex)
 
@@ -417,10 +415,20 @@ proc assembleBlock*(p: Web3DataProviderRef, parentHash: Eth2Digest,
       parentHash: "0x" & parentHash.data.toHex,
       timestamp: encodeQuantity(timestamp)))
 
+func encodeOpaqueTransaction(ot: OpaqueTransaction): string =
+  var res = "0x"
+  for b in ot.data:
+    res &= b.toHex
+  res
+
 proc newBlock*(p: Web3DataProviderRef,
                executableData: ExecutionPayload): Future[BoolReturnValidRPC] =
   info "FOO8a: in eth1Monitor.newBlock()",
     executableData
+  var transactions: List[string, MAX_EXECUTION_TRANSACTIONS]
+  # could just stream/iterate: TODO sequtils2 mapIt. or List.init(seq)
+  for s in mapIt(executableData.transactions, it.encodeOpaqueTransaction):
+    discard transactions.add s  # enforcement already done
   let executableDataRPC = ExecutionPayloadRPC(
     # TODO "0x" & foo refactor
     parentHash: "0x" & executableData.parent_hash.data.toHex,
@@ -432,8 +440,9 @@ proc newBlock*(p: Web3DataProviderRef,
     timestamp: encodeQuantity(executableData.timestamp),
     receiptsRoot: "0x" & executableData.receipt_root.data.toHex,
     logsBloom: "0x" & executableData.logs_bloom.data.toHex,
-    blockHash: "0x" & executableData.block_hash.data.toHex
-    ) # TODO transactions: executableData.transactions
+    blockHash: "0x" & executableData.block_hash.data.toHex,
+    transactions: transactions
+    )
   info "FOO8b: in eth1Monitor.newBlock()",
     executableDataRPC
   p.web3.provider.consensus_newBlock(executableDataRPC)
