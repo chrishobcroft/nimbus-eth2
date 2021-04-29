@@ -423,12 +423,10 @@ func encodeOpaqueTransaction(ot: OpaqueTransaction): string =
 
 proc newBlock*(p: Web3DataProviderRef,
                executableData: ExecutionPayload): Future[BoolReturnValidRPC] =
-  info "FOO8a: in eth1Monitor.newBlock()",
-    executableData
   var transactions: List[string, MAX_EXECUTION_TRANSACTIONS]
   # could just stream/iterate: TODO sequtils2 mapIt. or List.init(seq)
   for s in mapIt(executableData.transactions, it.encodeOpaqueTransaction):
-    discard transactions.add s  # enforcement already done
+    discard transactions.add s  # max len enforcement already done
   let executableDataRPC = ExecutionPayloadRPC(
     # TODO "0x" & foo refactor
     parentHash: "0x" & executableData.parent_hash.data.toHex,
@@ -443,8 +441,6 @@ proc newBlock*(p: Web3DataProviderRef,
     blockHash: "0x" & executableData.block_hash.data.toHex,
     transactions: transactions
     )
-  info "FOO8b: in eth1Monitor.newBlock()",
-    executableDataRPC
   p.web3.provider.consensus_newBlock(executableDataRPC)
 
 proc getEarliestBlock*(p: Web3DataProviderRef): Future[BlockObject] =
