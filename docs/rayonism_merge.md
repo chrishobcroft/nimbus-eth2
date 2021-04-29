@@ -23,7 +23,7 @@ get_genesis_hash.sh` to verify that Catalyst is properly configured.
 - Set up the MetaMask Chrome extension and use the seed phrase corresponding to an address with funds at genesis.
 - Configure the localhost:8545 network to use the Chain ID corresponding to the Catalyst chain configuration.
 ![./rayonism_metamask_network_setup.png](./rayonism_metamask_network_setup.png)
-- Create a transaction from that account to another address.
+- Create a transaction from that address to another address.
 ![./rayonism_metamask_send_eth.png](./rayonism_metamask_send_eth.png)
 - Run the local testnet to confirm the transaction.
 ![./rayonism_metamask_transaction_confirmation.png](./rayonism_metamask_transaction_confirmation.png)
